@@ -1,6 +1,6 @@
 [project]
 name = "image-archive-viewer"
-version = "0.2.2"
+version = "0.2.3"
 description = "A simple image archive (ZIP) viewer"
 readme = "README.md"
 authors = [{name = "CaptSolo"}]
@@ -23,9 +23,8 @@ dependencies = [
     "Pillow"
 ]
 
-#[project.urls]
-#homepage = ""
-#issues = ""
+[project.urls]
+homepage = "https://github.com/CaptSolo/image-archive-viewer/"
 
 [build-system]
 requires = ["hatchling"]
