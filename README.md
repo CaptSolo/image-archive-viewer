@@ -41,7 +41,7 @@ uv pip install image-archive-viewer
 You can also install it as a `uv` tool and then run it directly from shell:
 
 ```
-> uv tool install image-archive-viewer
+uv tool install image-archive-viewer
 ```
 
 ## Usage
