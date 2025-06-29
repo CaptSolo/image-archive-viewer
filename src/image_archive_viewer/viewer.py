@@ -1,12 +1,30 @@
 import sys
 import zipfile
 import io
+import logging
 from PIL import Image
 from PyQt5.QtWidgets import (
     QApplication, QLabel, QFileDialog, QWidget, QVBoxLayout
 )
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt, QTimer
+
+logger = logging.getLogger(__name__)
+
+# Setup logging only if enabled by flag
+def setup_logging(enable_logging):
+    if enable_logging:
+        log_format = '[%(levelname)s] %(message)s'
+        handlers = [
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler('image_archive_viewer.log', mode='w', encoding='utf-8')
+        ]
+        logging.basicConfig(level=logging.INFO, format=log_format, handlers=handlers)
+        logger.setLevel(logging.DEBUG)
+        logger.info('Logging enabled (console and file)')
+    else:
+        logging.basicConfig(level=logging.CRITICAL)  # Only log critical errors
+        logger.setLevel(logging.CRITICAL)
 
 
 class ArchiveImageSlideshow(QWidget):
@@ -63,17 +81,34 @@ class ArchiveImageSlideshow(QWidget):
         with zipfile.ZipFile(archive_path, 'r') as archive:
             for file_name in archive.namelist():
                 if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
-                    with archive.open(file_name) as image_file:
-                        image_data = image_file.read()
-                        pil_image = Image.open(io.BytesIO(image_data)).convert("RGB")
-                        qimage = QImage(
-                            pil_image.tobytes(),
-                            pil_image.width,
-                            pil_image.height,
-                            QImage.Format_RGB888
-                        )
-                        pixmap = QPixmap.fromImage(qimage)
-                        self.images.append(pixmap)
+                    logger.debug(f"Attempting to load: {file_name}")
+                    try:
+                        with archive.open(file_name) as image_file:
+                            image_data = image_file.read()
+                            logger.debug(f"Read {len(image_data)} bytes from {file_name}")
+                            pil_image = Image.open(io.BytesIO(image_data)).convert("RGB")
+                            logger.debug(f"PIL image size: {pil_image.size}")
+                            bytes_per_line = pil_image.width * 3
+                            qimage = QImage(
+                                pil_image.tobytes(),
+                                pil_image.width,
+                                pil_image.height,
+                                bytes_per_line,
+                                QImage.Format_RGB888
+                            )
+                            if qimage.isNull():
+                                logger.error(f"QImage is null for {file_name}, skipping.")
+                                continue
+                            pixmap = QPixmap.fromImage(qimage)
+                            if pixmap.isNull():
+                                logger.error(f"QPixmap is null for {file_name}, skipping.")
+                                continue
+                            self.images.append(pixmap)
+                            logger.info(f"Successfully loaded: {file_name}")
+                    except (OSError, ValueError) as e:
+                        logger.error(f"Failed to load {file_name}: {e}")
+                        logger.debug("Exception info:", exc_info=True)
+                        continue
 
     def show_image(self):
         if not self.images:
@@ -308,6 +343,12 @@ class ArchiveImageSlideshow(QWidget):
 
 
 def main():
+    
+    enable_logging = False
+    for arg in sys.argv[1:]:
+        if arg in ('--verbose', '-v'):
+            enable_logging = True
+    setup_logging(enable_logging)
 
     app = QApplication(sys.argv)
 
