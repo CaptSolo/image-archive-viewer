@@ -10,7 +10,7 @@ from PyQt5.QtCore import Qt, QTimer
 
 
 class ZipImageSlideshow(QWidget):
-    def __init__(self, zip_path):
+    def __init__(self, archive_path):
         super().__init__()
         self.images = []
         self.index = 0
@@ -49,18 +49,18 @@ class ZipImageSlideshow(QWidget):
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.showFullScreen()
 
-        self.load_images_from_zip(zip_path)
+        self.load_images_from_archive(archive_path)
 
         if not self.images:
-            self.label.setText("No PNG or JPG images found in the ZIP file.")
+            self.label.setText("No PNG or JPG images found in the archive file.")
         else:
             self.show_image()
 
         # Show startup overlay after window is displayed
         QTimer.singleShot(100, self.show_startup_overlay)
 
-    def load_images_from_zip(self, zip_path):
-        with zipfile.ZipFile(zip_path, 'r') as archive:
+    def load_images_from_archive(self, archive_path):
+        with zipfile.ZipFile(archive_path, 'r') as archive:
             for file_name in archive.namelist():
                 if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
                     with archive.open(file_name) as image_file:
@@ -256,7 +256,7 @@ class ZipImageSlideshow(QWidget):
             "Mouse drag: Pan image<br><br>"
             "<b>Other:</b><br>"
             "H: Show/hide this help<br>"
-            "O: Open a new ZIP file<br>"
+            "O: Open a new archive file<br>"
         )
 
     def resizeEvent(self, event):
@@ -286,11 +286,11 @@ class ZipImageSlideshow(QWidget):
         self.startup_label.setVisible(False)
 
     def open_new_file(self):
-        # Prompt user to select a new ZIP file
-        zip_file, _ = QFileDialog.getOpenFileName(
-            self, "Select ZIP file", "", "ZIP Files (*.zip)"
+        # Prompt user to select a new archive file
+        archive_file, _ = QFileDialog.getOpenFileName(
+            self, "Select archive file", "", "Archive Files (*.zip *.cbz);;ZIP Files (*.zip);;CBZ Files (*.cbz)"
         )
-        if zip_file:
+        if archive_file:
             # Reset viewer state
             self.images = []
             self.index = 0
@@ -298,11 +298,11 @@ class ZipImageSlideshow(QWidget):
             self.pan_offset = [0, 0]
             
             # Load new images
-            self.load_images_from_zip(zip_file)
+            self.load_images_from_archive(archive_file)
             
             # Update display
             if not self.images:
-                self.label.setText("No PNG or JPG images found in the ZIP file.")
+                self.label.setText("No PNG or JPG images found in the archive file.")
             else:
                 self.show_image()
 
@@ -311,14 +311,14 @@ def main():
 
     app = QApplication(sys.argv)
 
-    # Prompt user to select a ZIP file
-    zip_file, _ = QFileDialog.getOpenFileName(
-        None, "Select ZIP file", "", "ZIP Files (*.zip)"
+    # Prompt user to select an archive file
+    archive_file, _ = QFileDialog.getOpenFileName(
+        None, "Select archive file", "", "Archive Files (*.zip *.cbz);;ZIP Files (*.zip);;CBZ Files (*.cbz)"
     )
-    if not zip_file:
+    if not archive_file:
         sys.exit("No file selected.")
 
-    slideshow = ZipImageSlideshow(zip_file)
+    slideshow = ZipImageSlideshow(archive_file)
     slideshow.show()
     sys.exit(app.exec_())
 

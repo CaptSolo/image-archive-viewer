@@ -1,17 +1,31 @@
 # Image Archive Viewer
 
-A simple image archive (ZIP) viewer. Open a ZIP file containing images and browse them in a fullscreen mode, with a keyboard- and mouse-friendly user interface.
+A simple image archive viewer for ZIP and CBZ files. Open archive files containing images and browse them in a fullscreen mode with a keyboard- and mouse-friendly user interface.
 
-This archive viewer is built in Python and uses Qt for its user interface.
+This archive viewer is built in Python and uses Qt for its user interface. 
+
+It can be used for viewing comic books, photo collections, or any image archives.
 
 ## Features
 
-- View images from ZIP archives (PNG, JPG)
+- View images from ZIP and CBZ archives (PNG, JPG)
 - Fullscreen view
 - Mouse and keyboard navigation
 - Zoom and pan with mouse or keyboard
 
-To see help in the application press "H".
+To see help in the application press "H" at any time.
+
+## Supported Formats
+
+### Archive Formats
+
+- **CBZ files** (`.cbz`) - Comic Book ZIP files
+- **ZIP files** (`.zip`) - ZIP archives
+
+### Image Formats
+
+- PNG (`.png`)
+- JPEG (`.jpg`, `.jpeg`)
 
 ## Installation
 
@@ -64,8 +78,8 @@ You will be prompted to select a ZIP file containing images. The viewer will ope
 ### Zoom
 - **+** or **=**: Zoom in
 - **-**: Zoom out
-- **0**: Reset zoom
-- **Mouse wheel**: Zoom in/out
+- **0**: Reset zoom to fit window
+- **Mouse wheel**: Zoom in/out (centered on cursor)
 
 ### Panning
 - **W**: Pan down
@@ -76,7 +90,14 @@ You will be prompted to select a ZIP file containing images. The viewer will ope
 
 ### Other
 - **H**: Show/hide help information 
-- **O**: Open a new ZIP file
+- **O**: Open a new archive file (ZIP or CBZ)
+
+## Tips
+
+- Press **H** anytime to see a help screen with all available controls
+- Use **0** to quickly reset zoom and fit the image to the window
+- The mouse wheel zooms centered on your cursor position for precise control
+- When zoomed in, you can drag with the mouse to pan around the image
 
 ## License
 
