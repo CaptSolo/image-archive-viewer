@@ -9,7 +9,7 @@ from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt, QTimer
 
 
-class ZipImageSlideshow(QWidget):
+class ArchiveImageSlideshow(QWidget):
     def __init__(self, archive_path):
         super().__init__()
         self.images = []
@@ -318,7 +318,7 @@ def main():
     if not archive_file:
         sys.exit("No file selected.")
 
-    slideshow = ZipImageSlideshow(archive_file)
+    slideshow = ArchiveImageSlideshow(archive_file)
     slideshow.show()
     sys.exit(app.exec_())
 
