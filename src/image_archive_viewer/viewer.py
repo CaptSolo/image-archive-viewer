@@ -27,42 +27,38 @@ def setup_logging(enable_logging):
         logger.setLevel(logging.CRITICAL)
 
 
-class ImageReader:
-    def __init__(self, archive_path):
-        self.archive_path = archive_path
-
-    def read_images(self):
-        with zipfile.ZipFile(self.archive_path, 'r') as archive:
-            for file_name in archive.namelist():
-                if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
-                    logger.debug(f"Attempting to load: {file_name}")
-                    try:
-                        with archive.open(file_name) as image_file:
-                            image_data = image_file.read()
-                            logger.debug(f"Read {len(image_data)} bytes from {file_name}")
-                            pil_image = Image.open(io.BytesIO(image_data)).convert("RGB")
-                            logger.debug(f"PIL image size: {pil_image.size}")
-                            bytes_per_line = pil_image.width * 3
-                            qimage = QImage(
-                                pil_image.tobytes(),
-                                pil_image.width,
-                                pil_image.height,
-                                bytes_per_line,
-                                QImage.Format_RGB888
-                            )
-                            if qimage.isNull():
-                                logger.error(f"QImage is null for {file_name}, skipping.")
-                                continue
-                            pixmap = QPixmap.fromImage(qimage)
-                            if pixmap.isNull():
-                                logger.error(f"QPixmap is null for {file_name}, skipping.")
-                                continue
-                            yield pixmap
-                            logger.info(f"Successfully loaded: {file_name}")
-                    except (OSError, ValueError) as e:
-                        logger.error(f"Failed to load {file_name}: {e}")
-                        logger.debug("Exception info:", exc_info=True)
-                        continue
+def read_images(archive_path):
+    with zipfile.ZipFile(archive_path, 'r') as archive:
+        for file_name in sorted(archive.namelist()):
+            if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+                logger.debug(f"Attempting to load: {file_name}")
+                try:
+                    with archive.open(file_name) as image_file:
+                        image_data = image_file.read()
+                        logger.debug(f"Read {len(image_data)} bytes from {file_name}")
+                        pil_image = Image.open(io.BytesIO(image_data)).convert("RGB")
+                        logger.debug(f"PIL image size: {pil_image.size}")
+                        bytes_per_line = pil_image.width * 3
+                        qimage = QImage(
+                            pil_image.tobytes(),
+                            pil_image.width,
+                            pil_image.height,
+                            bytes_per_line,
+                            QImage.Format_RGB888
+                        )
+                        if qimage.isNull():
+                            logger.error(f"QImage is null for {file_name}, skipping.")
+                            continue
+                        pixmap = QPixmap.fromImage(qimage)
+                        if pixmap.isNull():
+                            logger.error(f"QPixmap is null for {file_name}, skipping.")
+                            continue
+                        yield pixmap
+                        logger.info(f"Successfully loaded: {file_name}")
+                except (OSError, ValueError) as e:
+                    logger.error(f"Failed to load {file_name}: {e}")
+                    logger.debug("Exception info:", exc_info=True)
+                    continue
 
 
 class ArchiveImageSlideshow(QWidget):
@@ -118,7 +114,8 @@ class ArchiveImageSlideshow(QWidget):
         self.pan_offset = [0, 0]  # (x, y) pan offset in pixels
         self.last_mouse_pos = None
 
-        reader = ImageReader(self.archive_path).read_images()
+        logger.debug(f"Reading archive file: {self.archive_path}")
+        reader = read_images(self.archive_path)
 
         try:
             first_img = next(reader)
@@ -137,7 +134,7 @@ class ArchiveImageSlideshow(QWidget):
 
 
     def load_remaining_images(self):
-        reader = ImageReader(self.archive_path).read_images()
+        reader = read_images(self.archive_path)
         next(reader)  # Skip the first image, already loaded
         for img in reader:
             self.images.append(img)
