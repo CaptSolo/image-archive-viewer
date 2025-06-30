@@ -1,6 +1,6 @@
 [project]
 name = "image-archive-viewer"
-version = "0.2.4"
+version = "0.3.0"
 description = "A simple image archive (ZIP) viewer"
 readme = "README.md"
 authors = [{name = "CaptSolo"}]
