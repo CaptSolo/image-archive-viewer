@@ -13,6 +13,8 @@ It can be used for viewing comic books, photo collections, or any image archives
 - Mouse and keyboard navigation
 - Zoom and pan with mouse or keyboard
 
+The list of files in the archive is sorted alphabetically upon loading.
+
 To see help in the application press "H" at any time.
 
 ## Supported Formats
