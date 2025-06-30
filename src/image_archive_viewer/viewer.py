@@ -27,9 +27,50 @@ def setup_logging(enable_logging):
         logger.setLevel(logging.CRITICAL)
 
 
+class ImageReader:
+    def __init__(self, archive_path):
+        self.archive_path = archive_path
+
+    def read_images(self):
+        with zipfile.ZipFile(self.archive_path, 'r') as archive:
+            for file_name in archive.namelist():
+                if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    logger.debug(f"Attempting to load: {file_name}")
+                    try:
+                        with archive.open(file_name) as image_file:
+                            image_data = image_file.read()
+                            logger.debug(f"Read {len(image_data)} bytes from {file_name}")
+                            pil_image = Image.open(io.BytesIO(image_data)).convert("RGB")
+                            logger.debug(f"PIL image size: {pil_image.size}")
+                            bytes_per_line = pil_image.width * 3
+                            qimage = QImage(
+                                pil_image.tobytes(),
+                                pil_image.width,
+                                pil_image.height,
+                                bytes_per_line,
+                                QImage.Format_RGB888
+                            )
+                            if qimage.isNull():
+                                logger.error(f"QImage is null for {file_name}, skipping.")
+                                continue
+                            pixmap = QPixmap.fromImage(qimage)
+                            if pixmap.isNull():
+                                logger.error(f"QPixmap is null for {file_name}, skipping.")
+                                continue
+                            yield pixmap
+                            logger.info(f"Successfully loaded: {file_name}")
+                    except (OSError, ValueError) as e:
+                        logger.error(f"Failed to load {file_name}: {e}")
+                        logger.debug("Exception info:", exc_info=True)
+                        continue
+
+
 class ArchiveImageSlideshow(QWidget):
     def __init__(self, archive_path):
         super().__init__()
+
+        self.archive_path = archive_path
+        
         self.images = []
         self.index = 0
         self.zoom_factor = 1.0  # 1.0 means fit to window
@@ -56,7 +97,7 @@ class ArchiveImageSlideshow(QWidget):
         self.startup_label.setStyleSheet(
             "background-color: rgba(0, 0, 0, 200); color: white; font-size: 20px; padding: 40px; border-radius: 15px;"
         )
-        self.startup_label.setText("Image Viewer\n\nPress H for help\nPress any other key to continue")
+        self.startup_label.setText("Image Viewer\n\nPress H for help\nPress any other key to continue\n\nPlease wait while images are loaded")
         self.startup_label.raise_()
 
         layout = QVBoxLayout()
@@ -67,48 +108,51 @@ class ArchiveImageSlideshow(QWidget):
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.showFullScreen()
 
-        self.load_images_from_archive(archive_path)
+        self.load_images()
+
+    def load_images(self):
+        # Reset viewer state
+        self.images = []
+        self.index = 0
+        self.zoom_factor = 1.0  # 1.0 means fit to window
+        self.pan_offset = [0, 0]  # (x, y) pan offset in pixels
+        self.last_mouse_pos = None
+
+        reader = ImageReader(self.archive_path).read_images()
+
+        try:
+            first_img = next(reader)
+            self.images.append(first_img)
+        except StopIteration:
+            pass
 
         if not self.images:
             self.label.setText("No PNG or JPG images found in the archive file.")
         else:
             self.show_image()
+            QTimer.singleShot(0, self.load_remaining_images)
 
-        # Show startup overlay after window is displayed
-        QTimer.singleShot(100, self.show_startup_overlay)
+            # Show startup overlay after window is displayed
+            QTimer.singleShot(50, self.show_startup_overlay)
 
-    def load_images_from_archive(self, archive_path):
-        with zipfile.ZipFile(archive_path, 'r') as archive:
-            for file_name in archive.namelist():
-                if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
-                    logger.debug(f"Attempting to load: {file_name}")
-                    try:
-                        with archive.open(file_name) as image_file:
-                            image_data = image_file.read()
-                            logger.debug(f"Read {len(image_data)} bytes from {file_name}")
-                            pil_image = Image.open(io.BytesIO(image_data)).convert("RGB")
-                            logger.debug(f"PIL image size: {pil_image.size}")
-                            bytes_per_line = pil_image.width * 3
-                            qimage = QImage(
-                                pil_image.tobytes(),
-                                pil_image.width,
-                                pil_image.height,
-                                bytes_per_line,
-                                QImage.Format_RGB888
-                            )
-                            if qimage.isNull():
-                                logger.error(f"QImage is null for {file_name}, skipping.")
-                                continue
-                            pixmap = QPixmap.fromImage(qimage)
-                            if pixmap.isNull():
-                                logger.error(f"QPixmap is null for {file_name}, skipping.")
-                                continue
-                            self.images.append(pixmap)
-                            logger.info(f"Successfully loaded: {file_name}")
-                    except (OSError, ValueError) as e:
-                        logger.error(f"Failed to load {file_name}: {e}")
-                        logger.debug("Exception info:", exc_info=True)
-                        continue
+
+    def load_remaining_images(self):
+        reader = ImageReader(self.archive_path).read_images()
+        next(reader)  # Skip the first image, already loaded
+        for img in reader:
+            self.images.append(img)
+        # After loading all images, update the startup overlay message
+        self.startup_label.setText("Image Viewer\n\nPress H for help\nPress any other key to continue\n\nImages were loaded OK")
+
+    def open_new_file(self):
+        # Prompt user to select a new archive file
+        archive_file, _ = QFileDialog.getOpenFileName(
+            self, "Select archive file", "", "Archive Files (*.zip *.cbz);;ZIP Files (*.zip);;CBZ Files (*.cbz)"
+        )
+
+        if archive_file:
+            self.archive_path = archive_file
+            self.load_images()
 
     def show_image(self):
         if not self.images:
@@ -240,6 +284,12 @@ class ArchiveImageSlideshow(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
+
+            # Hide startup overlay on mouse button press
+            if self.startup_label.isVisible():
+                self.hide_startup_overlay()
+                return
+
             self.last_mouse_pos = event.pos()
 
     def mouseMoveEvent(self, event):
@@ -320,26 +370,16 @@ class ArchiveImageSlideshow(QWidget):
     def hide_startup_overlay(self):
         self.startup_label.setVisible(False)
 
-    def open_new_file(self):
-        # Prompt user to select a new archive file
-        archive_file, _ = QFileDialog.getOpenFileName(
-            self, "Select archive file", "", "Archive Files (*.zip *.cbz);;ZIP Files (*.zip);;CBZ Files (*.cbz)"
-        )
-        if archive_file:
-            # Reset viewer state
-            self.images = []
-            self.index = 0
-            self.zoom_factor = 1.0
-            self.pan_offset = [0, 0]
-            
-            # Load new images
-            self.load_images_from_archive(archive_file)
-            
-            # Update display
-            if not self.images:
-                self.label.setText("No PNG or JPG images found in the archive file.")
-            else:
-                self.show_image()
+    def closeEvent(self, event):
+        """
+        Handles the window close event to ensure a fast shutdown by clearing the
+        image cache before closing.
+        """
+        logger.info("Shutdown initiated. Clearing image cache...")
+        self.images.clear()
+        # self.label.setPixmap(QPixmap())  # Clear the currently displayed pixmap
+        logger.info("Image cache cleared. Closing.")
+        super().closeEvent(event)
 
 
 def main():
