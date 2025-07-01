@@ -1,6 +1,6 @@
 # Image Archive Viewer
 
-A simple image archive viewer for ZIP and CBZ files. Open archive files containing images and browse them in a fullscreen mode with a keyboard- and mouse-friendly user interface.
+A simple image archive viewer for ZIP, RAR, CBR and CBZ files. Open archive files containing images and browse them in a fullscreen mode with a keyboard- and mouse-friendly user interface.
 
 This archive viewer is built in Python and uses Qt for its user interface. 
 
@@ -8,7 +8,7 @@ It can be used for viewing comic books, photo collections, or any image archives
 
 ## Features
 
-- View images from ZIP and CBZ archives (PNG, JPG)
+- View images from ZIP, RAR, CBR and CBZ archives (PNG, JPG)
 - Fullscreen view
 - Mouse and keyboard navigation
 - Zoom and pan with mouse or keyboard
@@ -21,7 +21,9 @@ To see help in the application press "H" at any time.
 
 ### Archive Formats
 
+- **CBR files** (`.cbr`) - Comic Book RAR files
 - **CBZ files** (`.cbz`) - Comic Book ZIP files
+- **RAR files** (`.rar`) - RAR archives
 - **ZIP files** (`.zip`) - ZIP archives
 
 ### Image Formats
@@ -34,11 +36,13 @@ To see help in the application press "H" at any time.
 ### Prerequisites
 
 - Python 3.8 or higher
+- unrar (for reading CBR and RAR files)
 
 ### Dependencies
 
 - PyQt5
 - Pillow
+- rarfile (for reading CBR and RAR files)
 
 ### Install from PyPI
 

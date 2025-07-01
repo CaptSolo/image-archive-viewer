@@ -1,7 +1,9 @@
 import sys
 import zipfile
+import rarfile
 import io
 import logging
+import os
 from PIL import Image
 from PyQt5.QtWidgets import (
     QApplication, QLabel, QFileDialog, QWidget, QVBoxLayout
@@ -28,8 +30,18 @@ def setup_logging(enable_logging):
 
 
 def read_images(archive_path):
-    with zipfile.ZipFile(archive_path, 'r') as archive:
-        for file_name in sorted(archive.namelist()):
+    
+    ext = os.path.splitext(archive_path)[1].lower()
+    if ext in ('.zip', '.cbz'):
+        archive_opener = zipfile.ZipFile
+    elif ext in ('.rar', '.cbr'):
+        archive_opener = rarfile.RarFile
+    else:
+        raise ValueError(f"Unsupported archive type: {archive_path} (extension: {ext})")
+
+    with archive_opener(archive_path, 'r') as archive:
+        file_list = sorted(archive.namelist())
+        for file_name in file_list:
             if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
                 logger.debug(f"Attempting to load: {file_name}")
                 try:
@@ -55,6 +67,7 @@ def read_images(archive_path):
                             continue
                         yield pixmap
                         logger.info(f"Successfully loaded: {file_name}")
+
                 except (OSError, ValueError) as e:
                     logger.error(f"Failed to load {file_name}: {e}")
                     logger.debug("Exception info:", exc_info=True)
@@ -114,14 +127,22 @@ class ArchiveImageSlideshow(QWidget):
         self.pan_offset = [0, 0]  # (x, y) pan offset in pixels
         self.last_mouse_pos = None
 
-        logger.debug(f"Reading archive file: {self.archive_path}")
-        reader = read_images(self.archive_path)
-
         try:
-            first_img = next(reader)
-            self.images.append(first_img)
-        except StopIteration:
-            pass
+            logger.info(f"Reading archive file: {self.archive_path}")
+            reader = read_images(self.archive_path)
+
+            try:
+                first_img = next(reader)
+                self.images.append(first_img)
+            except StopIteration:
+                pass
+
+        except rarfile.BadRarFile as e:
+            self.startup_label.setText("Error loading RAR/CBR file.\n\nDo you have unrar installed?")
+            self.startup_label.raise_()
+
+            # Show startup overlay after window is displayed
+            QTimer.singleShot(50, self.show_startup_overlay)
 
         if not self.images:
             self.label.setText("No PNG or JPG images found in the archive file.")
@@ -144,9 +165,8 @@ class ArchiveImageSlideshow(QWidget):
     def open_new_file(self):
         # Prompt user to select a new archive file
         archive_file, _ = QFileDialog.getOpenFileName(
-            self, "Select archive file", "", "Archive Files (*.zip *.cbz);;ZIP Files (*.zip);;CBZ Files (*.cbz)"
+            self, "Select archive file", "", "Archive Files (*.zip *.cbz *.rar *.cbr);;ZIP Files (*.zip);;CBZ Files (*.cbz);;CBR Files (*.cbr);;RAR Files (*.rar)"
         )
-
         if archive_file:
             self.archive_path = archive_file
             self.load_images()
@@ -391,7 +411,7 @@ def main():
 
     # Prompt user to select an archive file
     archive_file, _ = QFileDialog.getOpenFileName(
-        None, "Select archive file", "", "Archive Files (*.zip *.cbz);;ZIP Files (*.zip);;CBZ Files (*.cbz)"
+        None, "Select archive file", "", "Archive Files (*.zip *.cbz *.rar *.cbr);;ZIP Files (*.zip);;CBZ Files (*.cbz);;CBR Files (*.cbr);;RAR Files (*.rar)"
     )
     if not archive_file:
         sys.exit("No file selected.")

@@ -1,6 +1,6 @@
 [project]
 name = "image-archive-viewer"
-version = "0.3.0"
+version = "0.3.1"
 description = "A simple image archive (ZIP) viewer"
 readme = "README.md"
 authors = [{name = "CaptSolo"}]
@@ -20,7 +20,8 @@ classifiers = [
 license = {text = "MIT"}
 dependencies = [
     "PyQt5",
-    "Pillow"
+    "Pillow",
+    "rarfile",
 ]
 
 [project.urls]
