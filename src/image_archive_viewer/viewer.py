@@ -17,6 +17,9 @@ logger = logging.getLogger(__name__)
 
 # Setup logging only if enabled by flag
 def setup_logging(enable_logging: bool) -> None:
+    """
+    Set up logging configuration.
+    """
     if enable_logging:
         log_format = '[%(levelname)s] %(message)s'
         handlers = [
@@ -32,6 +35,15 @@ def setup_logging(enable_logging: bool) -> None:
 
 
 def read_images(archive_path: str) -> Iterator[QPixmap]:
+    """
+    Generator that yields images from a supported archive file.
+
+    Args:
+        archive_path (str): Path to the archive file.
+
+    Yields:
+        QPixmap: The next image in the archive as a QPixmap.
+    """
     
     ext = os.path.splitext(archive_path)[1].lower()
     if ext in ('.zip', '.cbz'):
@@ -77,17 +89,26 @@ def read_images(archive_path: str) -> Iterator[QPixmap]:
 
 
 class ArchiveImageSlideshow(QWidget):
+    """
+    Fullscreen image slideshow widget for viewing images from an archive file.
+
+    Args:
+        archive_path (str): Path to the archive file to load images from.
+    """
+
     def __init__(self, archive_path: str) -> None:
+        """
+        Initialize the slideshow widget and load the archive.
+
+        Args:
+            archive_path (str): Path to the archive file.
+        """
         super().__init__()
+
+        self.reset_viewer_state()
 
         self.archive_path = archive_path
         
-        self.images = []
-        self.index = 0
-        self.zoom_factor = 1.0  # 1.0 means fit to window
-        self.pan_offset = [0, 0]  # (x, y) pan offset in pixels
-        self.last_mouse_pos = None
-
         self.label = QLabel(self)
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setScaledContents(False)
@@ -121,13 +142,21 @@ class ArchiveImageSlideshow(QWidget):
 
         self.load_images()
 
-    def load_images(self) -> None:
-        # Reset viewer state
+    def reset_viewer_state(self) -> None:
+        """
+        Reset the viewer state.
+        """
         self.images = []
         self.index = 0
         self.zoom_factor = 1.0  # 1.0 means fit to window
         self.pan_offset = [0, 0]  # (x, y) pan offset in pixels
         self.last_mouse_pos = None
+
+    def load_images(self) -> None:
+        """
+        Load images from the archive file and initialize the viewer.
+        """
+        self.reset_viewer_state()
 
         try:
             logger.info(f"Reading archive file: {self.archive_path}")
@@ -157,6 +186,9 @@ class ArchiveImageSlideshow(QWidget):
 
 
     def load_remaining_images(self) -> None:
+        """
+        Load the remaining images from the archive.
+        """
         reader = read_images(self.archive_path)
         next(reader)  # Skip the first image, already loaded
         for img in reader:
@@ -165,6 +197,9 @@ class ArchiveImageSlideshow(QWidget):
         self.startup_label.setText("Image Viewer\n\nPress H for help\nPress any other key to continue\n\nImages were loaded OK")
 
     def open_new_file(self) -> None:
+        """
+        Open a file dialog to select a new archive file and load its images.
+        """
         # Prompt user to select a new archive file
         archive_file, _ = QFileDialog.getOpenFileName(
             self, "Select archive file", "", "Archive Files (*.zip *.cbz *.rar *.cbr);;ZIP Files (*.zip);;CBZ Files (*.cbz);;CBR Files (*.cbr);;RAR Files (*.rar)"
@@ -174,6 +209,9 @@ class ArchiveImageSlideshow(QWidget):
             self.load_images()
 
     def show_image(self) -> None:
+        """
+        Display the current image, applying zoom and pan as needed.
+        """
         if not self.images:
             return
         pixmap = self.images[self.index]
@@ -212,6 +250,9 @@ class ArchiveImageSlideshow(QWidget):
         self.label.setPixmap(canvas)
 
     def next_image(self) -> None:
+        """
+        Go to the next image in the archive.
+        """
         if self.index < len(self.images) - 1:
             self.index += 1
             self.zoom_factor = 1.0
@@ -219,6 +260,9 @@ class ArchiveImageSlideshow(QWidget):
             self.show_image()
 
     def previous_image(self) -> None:
+        """
+        Go back to the previous image in the archive.
+        """
         if self.index > 0:
             self.index -= 1
             self.zoom_factor = 1.0
@@ -226,6 +270,12 @@ class ArchiveImageSlideshow(QWidget):
             self.show_image()
 
     def keyPressEvent(self, event: Any) -> None:
+        """
+        Handle key press events.
+
+        Args:
+            event: The key event.
+        """
         key = event.key()
         
         # Hide startup overlay on any key press
@@ -262,6 +312,13 @@ class ArchiveImageSlideshow(QWidget):
             self.open_new_file()
 
     def zoom_in(self, center: Optional[Any] = None, zoom_rate: float = 1.2) -> None:
+        """
+        Zoom in on the image.
+
+        Args:
+            center: The point to center the zoom on (optional).
+            zoom_rate (float): The zoom multiplier.
+        """
         old_zoom = self.zoom_factor
         self.zoom_factor *= zoom_rate
         if center:
@@ -269,6 +326,13 @@ class ArchiveImageSlideshow(QWidget):
         self.show_image()
 
     def zoom_out(self, center: Optional[Any] = None, zoom_rate: float = 1.2) -> None:
+        """
+        Zoom out of the image.
+
+        Args:
+            center: The point to center the zoom on (optional).
+            zoom_rate (float): The zoom divisor.
+        """
         old_zoom = self.zoom_factor
         self.zoom_factor /= zoom_rate
         if self.zoom_factor < 0.2:
@@ -278,11 +342,21 @@ class ArchiveImageSlideshow(QWidget):
         self.show_image()
 
     def reset_zoom(self) -> None:
+        """
+        Reset zoom to fit the image to the window.
+        """
         self.zoom_factor = 1.0
         self.pan_offset = [0, 0]
         self.show_image()
 
     def adjust_pan_for_zoom(self, center: Any, old_zoom: float) -> None:
+        """
+        Adjust pan offset so that zooming focuses on the given point.
+
+        Args:
+            center: The point to focus zoom on.
+            old_zoom (float): The previous zoom factor.
+        """
         # Adjust pan so that zooming focuses on the mouse position
         if self.zoom_factor == 1.0:
             self.pan_offset = [0, 0]
@@ -295,6 +369,12 @@ class ArchiveImageSlideshow(QWidget):
         self.pan_offset[1] -= int(rel_y * (scale - 1))
 
     def wheelEvent(self, event: Any) -> None:
+        """
+        Handle mouse wheel events for zooming in and out.
+
+        Args:
+            event: The wheel event.
+        """
         # Zoom in/out with mouse wheel, centered on cursor
         if event.angleDelta().y() > 0:
             self.zoom_in(center=event.pos(), zoom_rate=1.05)
@@ -302,6 +382,12 @@ class ArchiveImageSlideshow(QWidget):
             self.zoom_out(center=event.pos(), zoom_rate=1.05)
 
     def mousePressEvent(self, event: Any) -> None:
+        """
+        Handle mouse press events.
+
+        Args:
+            event: The mouse event.
+        """
         if event.button() == Qt.LeftButton:
 
             # Hide startup overlay on mouse button press
@@ -312,6 +398,12 @@ class ArchiveImageSlideshow(QWidget):
             self.last_mouse_pos = event.pos()
 
     def mouseMoveEvent(self, event: Any) -> None:
+        """
+        Handle mouse move events for panning the image.
+
+        Args:
+            event: The mouse event.
+        """
         if self.last_mouse_pos and self.zoom_factor != 1.0:
             dx = event.x() - self.last_mouse_pos.x()
             dy = event.y() - self.last_mouse_pos.y()
@@ -321,10 +413,23 @@ class ArchiveImageSlideshow(QWidget):
             self.show_image()
 
     def mouseReleaseEvent(self, event: Any) -> None:
+        """
+        Handle mouse release events for ending panning.
+
+        Args:
+            event: The mouse event.
+        """
         if event.button() == Qt.LeftButton:
             self.last_mouse_pos = None
 
     def pan_image(self, dx: int, dy: int) -> None:
+        """
+        Pan the image by the given x and y offsets.
+
+        Args:
+            dx (int): Horizontal pan offset.
+            dy (int): Vertical pan offset.
+        """
         if self.zoom_factor == 1.0:
             return  # No panning when fit to window
         self.pan_offset[0] += dx
@@ -332,6 +437,9 @@ class ArchiveImageSlideshow(QWidget):
         self.show_image()
 
     def toggle_help_overlay(self) -> None:
+        """
+        Show or hide the help overlay.
+        """
         if self.help_label.isVisible():
             self.help_label.setVisible(False)
         else:
@@ -344,6 +452,12 @@ class ArchiveImageSlideshow(QWidget):
         self.help_label.raise_()
 
     def get_help_text(self) -> str:
+        """
+        Return the HTML help text for the help overlay.
+
+        Returns:
+            str: The help text in HTML format.
+        """
         return (
             "<b>Image Viewer Help</b><br><br>"
             "<b>Navigation:</b><br>"
@@ -364,6 +478,12 @@ class ArchiveImageSlideshow(QWidget):
         )
 
     def resizeEvent(self, event: Any) -> None:
+        """
+        Handle window resize events to adjust overlays.
+
+        Args:
+            event: The resize event.
+        """
         super().resizeEvent(event)
         if self.help_label.isVisible():
             margin = 30
@@ -374,11 +494,17 @@ class ArchiveImageSlideshow(QWidget):
             self.center_startup_overlay()
 
     def show_startup_overlay(self) -> None:
+        """
+        Show the startup overlay.
+        """
         self.center_startup_overlay()
         self.startup_label.setVisible(True)
         self.startup_label.raise_()
 
     def center_startup_overlay(self) -> None:
+        """
+        Center the startup overlay in the window.
+        """
         # Center the startup overlay in the window
         label_width = 400
         label_height = 220
@@ -387,12 +513,17 @@ class ArchiveImageSlideshow(QWidget):
         self.startup_label.setGeometry(x, y, label_width, label_height)
 
     def hide_startup_overlay(self) -> None:
+        """
+        Hide the startup overlay.
+        """
         self.startup_label.setVisible(False)
 
     def closeEvent(self, event: Any) -> None:
         """
-        Handles the window close event to ensure a fast shutdown by clearing the
-        image cache before closing.
+        Handle the window close event and clear the image cache.
+
+        Args:
+            event: The close event.
         """
         logger.info("Shutdown initiated. Clearing image cache...")
         self.images.clear()
@@ -402,7 +533,9 @@ class ArchiveImageSlideshow(QWidget):
 
 
 def main() -> None:
-
+    """
+    Main function of the application. 
+    """
     parser = argparse.ArgumentParser(
         description="Image Archive Viewer: view images from ZIP/CBZ/RAR/CBR archives in a fullscreen slideshow.",
     )
