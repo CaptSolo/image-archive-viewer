@@ -1,7 +1,7 @@
 [project]
 name = "image-archive-viewer"
-version = "0.3.1"
-description = "A simple image archive (ZIP) viewer"
+version = "0.3.2"
+description = "A simple image archive (ZIP, RAR, CBR, CBZ) viewer written in Python and Qt"
 readme = "README.md"
 authors = [{name = "CaptSolo"}]
 requires-python = ">=3.8"
