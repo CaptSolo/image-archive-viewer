@@ -1,6 +1,6 @@
 [project]
 name = "image-archive-viewer"
-version = "0.3.2"
+version = "0.3.3"
 description = "A simple image archive (ZIP, RAR, CBR, CBZ) viewer written in Python and Qt"
 readme = "README.md"
 authors = [{name = "CaptSolo"}]
@@ -49,4 +49,21 @@ explicit = true
 
 [tool.pytest.ini_options]
 pythonpath = "src"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--tb=auto",
+    "--cov=src/image_archive_viewer",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "gui: marks tests that require GUI interaction",
+    "integration: marks integration tests",
+]
 
