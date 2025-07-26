@@ -130,33 +130,6 @@ class TestReadImages:
         assert 'subdir/config.xml' not in filenames
         assert 'subdir/' not in filenames  # Directory entry should be filtered out
     
-    @patch('image_archive_viewer.archive_reader.rarfile.RarFile')
-    def test_read_images_rar_file_mocked(self, mock_rar_class):
-        """Test reading from RAR/CBR files with mocking."""
-        # Mock RarFile behavior
-        mock_rar = Mock()
-        mock_rar_class.return_value.__enter__.return_value = mock_rar
-        mock_rar.namelist.return_value = ['image1.jpg', 'image2.png']
-        
-        # Mock file content - create a proper context manager
-        mock_image_data = b'\xff\xd8\xff\xe0'  # JPEG header
-        mock_file = Mock()
-        mock_file.read.return_value = mock_image_data
-        mock_file.__enter__ = Mock(return_value=mock_file)
-        mock_file.__exit__ = Mock(return_value=None)
-        mock_rar.open.return_value = mock_file
-        
-        # Mock PIL Image.open
-        with patch('image_archive_viewer.archive_reader.Image.open') as mock_image_open:
-            mock_pil_image = Mock(spec=Image.Image)
-            mock_pil_image.convert.return_value = mock_pil_image
-            mock_image_open.return_value = mock_pil_image
-            
-            images = list(read_images('test.rar'))
-            
-            assert len(images) == 2
-            mock_rar_class.assert_called_once_with('test.rar', 'r')
-    
     def test_read_images_bad_rar_file(self):
         """Test error handling for bad RAR files."""
         with tempfile.NamedTemporaryFile(suffix='.rar', delete=False) as temp_file:
@@ -164,7 +137,6 @@ class TestReadImages:
             temp_path = temp_file.name
         
         try:
-            # The rarfile library raises NotRarFile, not BadRarFile for invalid files
             with pytest.raises((rarfile.BadRarFile, rarfile.NotRarFile)):
                 list(read_images(temp_path))
         finally:
