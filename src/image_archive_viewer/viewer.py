@@ -1,91 +1,48 @@
 import sys
-import zipfile
 import rarfile
-import io
 import logging
-import os
-from PIL import Image
+import argparse
+from typing import Any, Optional, Iterator
+
 from PyQt5.QtWidgets import (
     QApplication, QLabel, QFileDialog, QWidget, QVBoxLayout
 )
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtCore import Qt, QTimer
-import argparse
-from typing import Any, Optional, Iterator
+
+from .archive_reader import read_images
+from .logging_setup import setup_logging
 
 logger = logging.getLogger(__name__)
 
-# Setup logging only if enabled by flag
-def setup_logging(enable_logging: bool) -> None:
-    """
-    Set up logging configuration.
-    """
-    if enable_logging:
-        log_format = '[%(levelname)s] %(message)s'
-        handlers = [
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler('image_archive_viewer.log', mode='w', encoding='utf-8')
-        ]
-        logging.basicConfig(level=logging.INFO, format=log_format, handlers=handlers)
-        logger.setLevel(logging.DEBUG)
-        logger.info('Logging enabled (console and file)')
-    else:
-        logging.basicConfig(level=logging.CRITICAL)  # Only log critical errors
-        logger.setLevel(logging.CRITICAL)
 
-
-def read_images(archive_path: str) -> Iterator[QPixmap]:
+def read_images_qpixmap(archive_path: str) -> Iterator[QPixmap]:
     """
-    Generator that yields images from a supported archive file.
+    Generator that converts images returned by read_images to QPixmap.
 
     Args:
         archive_path (str): Path to the archive file.
-
-    Yields:
-        QPixmap: The next image in the archive as a QPixmap.
     """
-    
-    ext = os.path.splitext(archive_path)[1].lower()
-    if ext in ('.zip', '.cbz'):
-        archive_opener = zipfile.ZipFile
-    elif ext in ('.rar', '.cbr'):
-        archive_opener = rarfile.RarFile
-    else:
-        raise ValueError(f"Unsupported archive type: {archive_path} (extension: {ext})")
 
-    with archive_opener(archive_path, 'r') as archive:
-        file_list = sorted(archive.namelist())
-        for file_name in file_list:
-            if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
-                logger.debug(f"Attempting to load: {file_name}")
-                try:
-                    with archive.open(file_name) as image_file:
-                        image_data = image_file.read()
-                        logger.debug(f"Read {len(image_data)} bytes from {file_name}")
-                        pil_image = Image.open(io.BytesIO(image_data)).convert("RGB")
-                        logger.debug(f"PIL image size: {pil_image.size}")
-                        bytes_per_line = pil_image.width * 3
-                        qimage = QImage(
-                            pil_image.tobytes(),
-                            pil_image.width,
-                            pil_image.height,
-                            bytes_per_line,
-                            QImage.Format_RGB888
-                        )
-                        if qimage.isNull():
-                            logger.error(f"QImage is null for {file_name}, skipping.")
-                            continue
-                        pixmap = QPixmap.fromImage(qimage)
-                        if pixmap.isNull():
-                            logger.error(f"QPixmap is null for {file_name}, skipping.")
-                            continue
-                        yield pixmap
-                        logger.info(f"Successfully loaded: {file_name}")
+    for file_name, pil_image in read_images(archive_path):
 
-                except (OSError, ValueError) as e:
-                    logger.error(f"Failed to load {file_name}: {e}")
-                    logger.debug("Exception info:", exc_info=True)
-                    continue
+        bytes_per_line = pil_image.width * 3
+        qimage = QImage(
+            pil_image.tobytes(),
+            pil_image.width,
+            pil_image.height,
+            bytes_per_line,
+            QImage.Format_RGB888
+        )
+        if qimage.isNull():
+            logger.error(f"QImage is null for {file_name}, skipping.")
+            continue
+        pixmap = QPixmap.fromImage(qimage)
+        if pixmap.isNull():
+            logger.error(f"QPixmap is null for {file_name}, skipping.")
+            continue
+        
+        yield pixmap
 
 
 class ArchiveImageSlideshow(QWidget):
@@ -160,7 +117,7 @@ class ArchiveImageSlideshow(QWidget):
 
         try:
             logger.info(f"Reading archive file: {self.archive_path}")
-            reader = read_images(self.archive_path)
+            reader = read_images_qpixmap(self.archive_path)
 
             try:
                 first_img = next(reader)
@@ -189,7 +146,7 @@ class ArchiveImageSlideshow(QWidget):
         """
         Load the remaining images from the archive.
         """
-        reader = read_images(self.archive_path)
+        reader = read_images_qpixmap(self.archive_path)
         next(reader)  # Skip the first image, already loaded
         for img in reader:
             self.images.append(img)

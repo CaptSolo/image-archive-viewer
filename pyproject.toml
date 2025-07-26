@@ -24,6 +24,13 @@ dependencies = [
     "rarfile",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    "pytest-qt>=4.0",
+    "pytest-cov>=4.0",
+]
+
 [project.urls]
 homepage = "https://github.com/CaptSolo/image-archive-viewer/"
 
