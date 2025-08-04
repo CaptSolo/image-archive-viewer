@@ -494,7 +494,7 @@ def main() -> None:
     Main function of the application. 
     """
     parser = argparse.ArgumentParser(
-        description="Image Archive Viewer: view images from ZIP/CBZ/RAR/CBR archives in a fullscreen slideshow.",
+            description="ComicView: Image Archive Viewer - view images from ZIP/CBZ/RAR/CBR archives in a fullscreen slideshow.",
     )
     parser.add_argument(
         '-v', '--verbose',

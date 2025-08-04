@@ -33,6 +33,13 @@ To see help in the application press "H" at any time.
 
 ## Installation
 
+### Compatibility
+
+ComicView works with:
+- Linux
+- macOS
+- Microsoft Windows
+
 ### Prerequisites
 
 - Python 3.8 or higher
@@ -44,24 +51,31 @@ To see help in the application press "H" at any time.
 - Pillow
 - rarfile (for reading CBR and RAR files)
 
+The application will fail reading CBR and RAR files if `unrar` is not installed.
+- for macOS and Linux: `unrar` can be installed using a package manager (e.g. Homebrew on macOS)
+- for Windows: download `unrar` from the [RARLab site](https://www.rarlab.com/rar_add.htm) and put it in a folder on the system search PATH.
+
 ### Install from PyPI
 
-To install this tool run:
+You can install `ComicView` as a `uv` tool and then run it directly from shell:
+
+```
+uv tool install image-archive-viewer
+```
+
+The application installed this way will be available globally on the command line.
+This installation method requires the [uv package manager](https://docs.astral.sh/uv/) for Python.
+
+You can also install `ComicView` using `pip` or `uv pip` command, typically inside a Python virtual environment:
 
 ```
 pip install image-archive-viewer
 ```
 
-Using `uv`:
+Using `uv pip`:
 
 ```
 uv pip install image-archive-viewer
-```
-
-You can also install it as a `uv` tool and then run it directly from shell:
-
-```
-uv tool install image-archive-viewer
 ```
 
 ## Usage
