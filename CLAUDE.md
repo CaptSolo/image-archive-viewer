@@ -9,8 +9,10 @@ ComicView is a Python-based image archive viewer for viewing images from ZIP, RA
 ## Project Structure
 
 - `src/image_archive_viewer/` - Main package directory
-  - `viewer.py` - Single-file application containing all functionality
-  - `__init__.py` - Empty package initialization file
+  - `viewer.py` - Main viewer application and UI components
+  - `archive_reader.py` - Archive reading and image processing functionality
+  - `logging_setup.py` - Logging configuration
+  - `__init__.py` - Package initialization file
 - `tests/` - Test suite directory
   - `fixtures/` - Test fixture files and creation scripts
   - `test_*.py` - Unit test modules
@@ -200,7 +202,7 @@ uv build
 
 ## Development Notes
 
-- Single-file architecture - all functionality in `viewer.py`
+- Modular architecture: UI (`viewer.py`), archive processing (`archive_reader.py`), and logging (`logging_setup.py`)
 - Test suite with fixtures for all archive formats
 - Frameless fullscreen window with manual overlay positioning
 - Progressive loading prevents UI freezing on large archives
