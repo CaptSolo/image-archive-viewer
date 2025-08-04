@@ -1,7 +1,7 @@
 [project]
 name = "image-archive-viewer"
-version = "0.3.3"
-description = "A simple image archive (ZIP, RAR, CBR, CBZ) viewer written in Python and Qt"
+version = "0.4.0"
+description = "ComicView: an image archive (ZIP, RAR, CBR, CBZ) viewer written in Python and Qt"
 readme = "README.md"
 authors = [{name = "CaptSolo"}]
 requires-python = ">=3.8"
@@ -39,7 +39,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
-show_images = "image_archive_viewer.viewer:main"
+comic_view = "image_archive_viewer.viewer:main"
 
 [[tool.uv.index]]
 name = "testpypi"

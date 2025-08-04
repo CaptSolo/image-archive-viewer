@@ -1,8 +1,8 @@
-# Image Archive Viewer
+# ComicView: Image Archive Viewer
 
-A simple image archive viewer for ZIP, RAR, CBR and CBZ files. Open archive files containing images and browse them in a fullscreen mode with a keyboard- and mouse-friendly user interface.
+ComicView is an image archive viewer for ZIP, RAR, CBR and CBZ files. Open archive files containing images and browse them in a fullscreen mode with a keyboard- and mouse-friendly user interface.
 
-This archive viewer is built in Python and uses Qt for its user interface. 
+This image archive viewer is built in Python and uses Qt for its user interface. 
 
 It can be used for viewing comic books, photo collections, or any image archives.
 
@@ -69,7 +69,7 @@ uv tool install image-archive-viewer
 After installation, run the viewer:
 
 ```bash
-show_images
+comic_view
 ```
 
 You will be prompted to select a ZIP file containing images. The viewer will open in a fullscreen mode.
