@@ -1,6 +1,6 @@
 [project]
 name = "image-archive-viewer"
-version = "0.4.0"
+version = "0.4.1"
 description = "ComicView: an image archive (ZIP, RAR, CBR, CBZ) viewer written in Python and Qt"
 readme = "README.md"
 authors = [{name = "CaptSolo"}]
