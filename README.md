@@ -72,7 +72,7 @@ After installation, run the viewer:
 comic_view
 ```
 
-You will be prompted to select a ZIP file containing images. The viewer will open in a fullscreen mode.
+You will be prompted to select a comic book or archive file containing images. The viewer will open in a fullscreen mode.
 
 ## Controls
 
@@ -96,7 +96,7 @@ You will be prompted to select a ZIP file containing images. The viewer will ope
 
 ### Other
 - **H**: Show/hide help information 
-- **O**: Open a new archive file (ZIP or CBZ)
+- **O**: Open a new archive file
 
 ## Tips
 
