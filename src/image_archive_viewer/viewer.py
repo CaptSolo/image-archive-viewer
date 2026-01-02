@@ -505,6 +505,8 @@ def main() -> None:
 
     setup_logging(args.verbose)
 
+    print("Choose an image archive file (CBR, CBZ, RAR or ZIP) to view.")
+
     app = QApplication(sys.argv)
 
     # Prompt user to select an archive file
